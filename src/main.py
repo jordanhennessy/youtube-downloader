@@ -22,9 +22,22 @@ def start_download():
         st.write("An error has occurred, please refresh the page")
 
 
+def get_resolution(video: YouTube):
+    best_resolution = None
+    resolutions = ["720p", "480p", "360p"]
+    for resolution in resolutions:
+        if video.streams.filter(resolution=resolution).first():
+            best_resolution = resolution
+            break
+
+    if best_resolution:
+        return video.streams.filter(resolution=best_resolution).first()
+
+
 def download_mp4():
     video = YouTube(st.session_state["url"])
-    video = video.streams.get_highest_resolution()
+    video = get_resolution(video)
+    st.session_state["title"] = video.title
     file_path = video.download(output_path=file_dir)
     st.session_state["file"] = file_path
     st.session_state["downloaded"] = True
@@ -33,6 +46,7 @@ def download_mp4():
 def download_mp3():
     video = YouTube(st.session_state["url"])
     video = video.streams.filter(only_audio=True).first()
+    st.session_state["title"] = video.title
     file_path = video.download(output_path=file_dir)
     base, ext = path.splitext(file_path)
     new_file_path = base + ".mp3"
@@ -66,7 +80,8 @@ with col1:
         else:
             mime = "video/mp4"
         with open(st.session_state["file"], "rb") as output:
-            st.download_button(f"Download {st.session_state['output']}", data=output, mime=mime, on_click=cleanup())
+            st.download_button(f"Download {st.session_state['output']}", data=output, mime=mime, on_click=cleanup(),
+                               file_name=f"{st.session_state['title']}.{str(st.session_state['output']).lower()}")
 
 with col2:
     st.session_state["output"] = st.radio("File Type:", ("MP3", "MP4"))
