@@ -8,6 +8,8 @@ file_dir = "/tmp/files"
 def cleanup():
     for name in listdir(file_dir):
         remove(f"{file_dir}/{name}")
+    st.session_state["confirmed"] = False
+    st.session_state["file"] = None
 
 
 def start_download():
