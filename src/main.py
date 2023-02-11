@@ -3,6 +3,7 @@ from pytube import YouTube
 from os import listdir, remove, path, rename
 
 file_dir = "/tmp/files"
+max_vid_length = 1500
 
 
 def cleanup():
@@ -36,6 +37,9 @@ def get_resolution(video: YouTube):
 
 def download_mp4():
     video = YouTube(st.session_state["url"])
+    if video.length > max_vid_length:
+        st.session_state["error"] = True
+        return
     video = get_resolution(video)
     st.session_state["title"] = video.title
     file_path = video.download(output_path=file_dir)
@@ -65,6 +69,8 @@ if "downloaded" not in st.session_state:
     st.session_state["downloaded"] = False
 if "file" not in st.session_state:
     st.session_state["file"] = None
+if "error" not in st.session_state:
+    st.session_state["error"] = False
 
 
 col1, col2 = st.columns(2)
@@ -82,6 +88,8 @@ with col1:
         with open(st.session_state["file"], "rb") as output:
             st.download_button(f"Download {st.session_state['output']}", data=output, mime=mime, on_click=cleanup(),
                                file_name=f"{st.session_state['title']}.{str(st.session_state['output']).lower()}")
+    if st.session_state["error"]:
+        st.write("Videos longer than 25 minutes are not supported. Refresh the page to try a different video")
 
 with col2:
     st.session_state["output"] = st.radio("File Type:", ("MP3", "MP4"))
