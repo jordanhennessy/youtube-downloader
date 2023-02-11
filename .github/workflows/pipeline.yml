@@ -1,0 +1,36 @@
+name: YouTube Downloader Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Docker image
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout code
+
+      - name: Build image
+        uses: mr-smithers-excellent/docker-build-push@v4
+        with:
+          image: jordanhennessy/youtube-downloader
+          tag: latest
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy Docker image to Linode
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.LINODE_HOST }}
+          username: ${{ secrets.LINODE_USERNAME }}
+          password: ${{ secrets.LINODE_PASSWORD }}
+          port: ${{ secrets.LINODE_PORT }}
+          script: bash ~/scripts/github-actions/update-youtube-downloader.sh
